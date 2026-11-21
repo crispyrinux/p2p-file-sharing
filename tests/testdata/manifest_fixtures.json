@@ -1,0 +1,67 @@
+{
+  "valid_manifest": {
+    "file_id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "file_name": "sample_document.pdf",
+    "total_bytes": 1048576,
+    "chunk_size": 524288,
+    "chunk_count": 2,
+    "chunk_hashes": [
+      "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      "fcde2b2edba56bf408686e333f380ee40702d05ce52634d437ac983204e36fed"
+    ],
+    "created_at": "2026-11-21T00:00:00Z"
+  },
+  "zero_byte_manifest": {
+    "file_id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "file_name": "empty.txt",
+    "total_bytes": 0,
+    "chunk_size": 524288,
+    "chunk_count": 0,
+    "chunk_hashes": [],
+    "created_at": "2026-11-21T00:00:00Z"
+  },
+  "sub_1kb_manifest": {
+    "file_id": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+    "file_name": "small.txt",
+    "total_bytes": 500,
+    "chunk_size": 524288,
+    "chunk_count": 1,
+    "chunk_hashes": [
+      "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e"
+    ],
+    "created_at": "2026-11-21T00:00:00Z"
+  },
+  "oversized_manifest": {
+    "file_id": "b591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146f",
+    "file_name": "huge.iso",
+    "total_bytes": 3221225472,
+    "chunk_size": 524288,
+    "chunk_count": 6144,
+    "chunk_hashes": [],
+    "created_at": "2026-11-21T00:00:00Z"
+  },
+  "mismatched_chunk_count_manifest": {
+    "file_id": "c591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f1460",
+    "file_name": "bad_count.bin",
+    "total_bytes": 1048576,
+    "chunk_size": 524288,
+    "chunk_count": 5,
+    "chunk_hashes": [
+      "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      "fcde2b2edba56bf408686e333f380ee40702d05ce52634d437ac983204e36fed"
+    ],
+    "created_at": "2026-11-21T00:00:00Z"
+  },
+  "traversal_filename_manifest": {
+    "file_id": "d591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f1461",
+    "file_name": "../../etc/shadow",
+    "total_bytes": 1048576,
+    "chunk_size": 524288,
+    "chunk_count": 2,
+    "chunk_hashes": [
+      "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      "fcde2b2edba56bf408686e333f380ee40702d05ce52634d437ac983204e36fed"
+    ],
+    "created_at": "2026-11-21T00:00:00Z"
+  }
+}

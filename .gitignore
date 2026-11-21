@@ -1,0 +1,35 @@
+# Binaries & build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go vendor & coverage
+vendor/
+coverage.out
+coverage.html
+coverage
+
+# Local data & temporary node runtime folders
+.p2p/
+.node*/
+downloads/
+testdata_temp/
+*.dat
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.idea/
+.vscode/
+
+# Speckit specifications, memory, and agent markdown artifacts
+specs/
+.specify/
+.agents/
