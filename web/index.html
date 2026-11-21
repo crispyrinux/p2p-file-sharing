@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P File Sharing Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m4.93 4.93 4.24 4.24"></path>
+          <path d="m14.83 9.17 4.24-4.24"></path>
+          <path d="m14.83 14.83 4.24 4.24"></path>
+          <path d="m9.17 14.83-4.24 4.24"></path>
+          <circle cx="12" cy="12" r="4"></circle>
+        </svg>
+        <span class="brand-title">P2P Mesh Transfer</span>
+      </div>
+
+      <div class="header-status">
+        <span class="status-badge active" id="node-status-badge">
+          <span class="status-dot"></span> Node Active
+        </span>
+        <div class="peer-id-badge" title="Local Peer ID">
+          <span>ID: <span id="peer-id-short" class="mono">Loading...</span></span>
+          <button class="btn-icon" id="btn-copy-peer-id" aria-label="Copy Peer ID" title="Copy full Peer ID">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Top Metrics Row -->
+    <section class="stats-row" aria-label="Node Statistics">
+      <div class="stat-box">
+        <div class="stat-label">Listening Port</div>
+        <div class="stat-value" id="stat-port">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Discovered Peers</div>
+        <div class="stat-value" id="stat-peers-count">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Shared Files</div>
+        <div class="stat-value" id="stat-shares-count">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Current Transfer Speed</div>
+        <div class="stat-value" id="stat-transfer-speed">0.0 MB/s</div>
+      </div>
+    </section>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
+      <!-- Left Column: Transfers & Chunk Visualizer -->
+      <div class="main-column" style="display:flex; flex-direction:column; gap:1.5rem;">
+        
+        <!-- Chunk Grid Visualizer Card -->
+        <section class="chunk-visualizer-card" id="transfer-card">
+          <div class="visualizer-header">
+            <div>
+              <h2 class="file-info-title" id="transfer-file-name">No Active Transfer</h2>
+              <div class="file-info-meta">
+                <span id="transfer-file-size">0.0 MB</span>
+                <span>•</span>
+                <span id="transfer-chunks-ratio">0 / 0 Chunks Verified</span>
+                <span>•</span>
+                <span id="transfer-eta">ETA: --</span>
+              </div>
+            </div>
+
+            <div class="visualizer-legend">
+              <div class="legend-item"><span class="legend-swatch pending"></span> Pending</div>
+              <div class="legend-item"><span class="legend-swatch fetching"></span> Fetching</div>
+              <div class="legend-item"><span class="legend-swatch verified"></span> Verified</div>
+              <div class="legend-item"><span class="legend-swatch corrupt"></span> Corrupt</div>
+            </div>
+          </div>
+
+          <!-- Interactive BitTorrent Chunk Blocks Grid -->
+          <div class="chunk-grid-container" id="chunk-grid" role="region" aria-label="Chunk blocks visualizer">
+            <!-- Dynamically populated chunk blocks -->
+            <div style="grid-column: 1 / -1; text-align: center; color: var(--color-text-muted); padding: 2rem;">
+              Transfer telemetry idle. Start a download to visualize real-time chunk verification.
+            </div>
+          </div>
+
+          <!-- Progress Bar & Controls -->
+          <div class="progress-container">
+            <div class="progress-header">
+              <span id="transfer-status-text">Status: Idle</span>
+              <span id="transfer-percent-text">0%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="transfer-progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="transfer-controls" style="margin-top: 1rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button class="btn btn-secondary" id="btn-pause-transfer" style="display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+              Pause
+            </button>
+            <button class="btn btn-primary" id="btn-resume-transfer" style="display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Resume
+            </button>
+          </div>
+        </section>
+
+        <!-- Download New File Section -->
+        <section class="card" aria-labelledby="heading-download">
+          <div class="card-header">
+            <h2 class="card-title" id="heading-download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download File by SHA-256 ID
+            </h2>
+          </div>
+          <form id="form-download" style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="input-download-fid">File ID (SHA-256 Digest)</label>
+              <input type="text" id="input-download-fid" class="input-field mono" placeholder="e.g. 5647f05ec18958947d32874eeb788fa396a05d0bab7c1b71f112ceb7e9b31eee" required maxlength="64">
+            </div>
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+              <div class="form-group">
+                <label class="form-label" for="select-download-peer">Select Remote Peer</label>
+                <select id="select-download-peer" class="input-field">
+                  <option value="">-- Choose Discovered Peer or Enter Endpoint --</option>
+                </select>
+              </div>
+              <div class="form-group" style="align-self:flex-end;">
+                <button type="submit" class="btn btn-primary" style="width:100%;" id="btn-start-download">
+                  Start Download
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Locally Shared Files Table -->
+        <section class="card" aria-labelledby="heading-shares">
+          <div class="card-header">
+            <h2 class="card-title" id="heading-shares">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Locally Shared Files
+            </h2>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-shares">
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Size</th>
+                  <th>Chunks</th>
+                  <th>File ID</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="shares-table-body">
+                <tr>
+                  <td colspan="5" style="text-align:center; color: var(--color-text-muted); padding: 1.5rem;">
+                    No files currently shared. Publish a file using the form below.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Right Column: Publish & Discovered Peers -->
+      <div class="side-column" style="display:flex; flex-direction:column; gap:1.5rem;">
+        
+        <!-- Drag-and-Drop File Publishing -->
+        <section class="card" aria-labelledby="heading-publish">
+          <div class="card-header">
+            <h2 class="card-title" id="heading-publish">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Publish & Share File
+            </h2>
+          </div>
+          
+          <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Upload or share file dropzone">
+            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+              <path d="M12 12v9"></path>
+              <path d="m16 16-4-4-4 4"></path>
+            </svg>
+            <div class="dropzone-text">
+              <strong>Select a file</strong> or drag & drop here
+            </div>
+            <span style="font-size:0.75rem; color:var(--color-text-muted);">Automatically chunked (512 KB) & hashed (SHA-256)</span>
+            <input type="file" id="file-input" style="display:none;">
+          </div>
+
+          <div style="text-align:center; font-size:0.75rem; color:var(--color-text-muted); margin: 0.25rem 0;">OR ENTER LOCAL PATH</div>
+
+          <form id="form-share-path" style="display:flex; gap:0.5rem;">
+            <input type="text" id="input-share-path" class="input-field" placeholder="C:\path\to\file.iso or /home/..." required>
+            <button type="submit" class="btn btn-secondary">Publish</button>
+          </form>
+        </section>
+
+        <!-- Discovered Peers Table -->
+        <section class="card" aria-labelledby="heading-peers">
+          <div class="card-header">
+            <h2 class="card-title" id="heading-peers">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Discovered Peers
+            </h2>
+            <button class="btn btn-secondary" id="btn-open-add-peer" style="padding: 0.35rem 0.75rem; font-size:0.8125rem;">
+              + Add Peer
+            </button>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="table-peers">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Source</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="peers-table-body">
+                <tr>
+                  <td colspan="3" style="text-align:center; color: var(--color-text-muted); padding: 1.5rem;">
+                    Searching for peers on local network...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Peer Modal -->
+  <dialog id="modal-add-peer" style="background:var(--color-bg-secondary); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:1.5rem; color:var(--color-text-primary); max-width:420px; width:90%; box-shadow:var(--shadow-lg);">
+    <h3 style="margin-bottom:1rem; font-size:1.125rem;">Register Peer Manually</h3>
+    <form id="form-add-peer" style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group">
+        <label class="form-label" for="input-peer-endpoint">Peer Endpoint (host:port)</label>
+        <input type="text" id="input-peer-endpoint" class="input-field mono" placeholder="192.168.1.100:4001" required>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.5rem;">
+        <button type="button" class="btn btn-secondary" id="btn-close-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Connect</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

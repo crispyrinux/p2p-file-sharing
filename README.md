@@ -237,6 +237,39 @@ Mendapatkan output terstruktur dalam format JSON di semua perintah CLI:
 ```powershell
 .\p2p.exe status --data-dir .nodeB --json
 .\p2p.exe peers --data-dir .nodeB --json
+---
+
+## Web UI Dashboard & Real-Time Visualization
+
+P2P File Sharing menyertakan dashboard antarmuka web modern yang langsung di-embed ke dalam binary Go executable tunggal melalui `//go:embed`. Tidak diperlukan dependensi eksternal seperti Node.js atau npm pada sistem host.
+
+### Fitur Utama Web Dashboard:
+- **BitTorrent-Style Live Chunk Grid Visualizer**: Visualisasi matriks blok chunk secara langsung saat berkas diunduh.
+  - **Abu-abu (Slate 700)**: Chunk antre (`Pending`).
+  - **Biru Berkedip (Blue 500 Pulse)**: Sedang diambil dari peer (`Fetching`).
+  - **Hijau Pop (Emerald 500)**: Checksum SHA-256 terverifikasi dan tersimpan (`Verified`).
+  - **Merah Goyang (Red 500 Shake)**: Checksum rusak, otomatis di-request ulang (`Corrupt`).
+- **Low-Latency Telemetry (Server-Sent Events)**: Telemetri progres, kecepatan transfer (MB/s), dan pembaruan chunk secara real-time via endpoint SSE `/api/events` (< 100ms latensi).
+- **Drag-and-Drop File Publishing**: Tarik dan lepas berkas ke dropzone untuk menghitung digest SHA-256 dan membagikan token secara instan.
+- **Manajemen Peer**: Daftar peer yang ditemukan via mDNS lokal serta modal untuk menambahkan endpoint peer manual.
+- **Kontrol Sesi Transfer**: Tombol Pause dan Resume unduhan secara interaktif dengan retensi bitfield 100% (0% re-download).
+- **Desain Ergonomis (ui-ux-pro-max)**: Tema Developer Dark Theme (Slate 900 latar, Slate 800 cards, kontras WCAG AA 4.5:1, tipografi Inter, dan rendering angka tabular monospace).
+
+### Mengakses Web Dashboard:
+Saat daemon dijalankan (`p2p start`), server web otomatis aktif di port `8080`:
+```powershell
+.\p2p.exe start --port 4001 --web 8080
+```
+Buka peramban (browser) di alamat:
+👉 **`http://localhost:8080`**
+
+Untuk mengubah port web server atau menonaktifkannya:
+```powershell
+# Menggunakan port web khusus (misal 9090)
+.\p2p.exe start --port 4001 --web 9090
+
+# Menjalankan daemon murni tanpa web server
+.\p2p.exe start --port 4001 --no-web
 ```
 
 ---

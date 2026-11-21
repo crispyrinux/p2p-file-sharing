@@ -3,9 +3,11 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,6 +19,7 @@ import (
 	"p2p-file-sharing/pkg/manifest"
 	"p2p-file-sharing/pkg/transfer"
 	"p2p-file-sharing/pkg/transport"
+	"p2p-file-sharing/pkg/web"
 )
 
 // DaemonInfo tracks runtime parameters for running nodes.
@@ -32,6 +35,8 @@ func RunStart(args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 
 	port := fs.Int("port", 4001, "Local TCP listening port")
+	webPort := fs.Int("web", 8080, "Embedded Web UI HTTP port (0 to disable)")
+	noWeb := fs.Bool("no-web", false, "Disable embedded Web UI dashboard")
 	dataDir := fs.String("data-dir", ".p2p", "Working directory for node data")
 	noMDNS := fs.Bool("no-mdns", false, "Disable mDNS broadcast")
 	jsonFlag := fs.Bool("json", false, "Output in JSON format")
@@ -120,16 +125,48 @@ func RunStart(args []string, stdout, stderr io.Writer) int {
 		}
 	}()
 
+	// Web UI Server
+	var webServer *web.Server
+	if !*noWeb && *webPort > 0 {
+		webCfg := web.ServerConfig{
+			Port:       uint16(*webPort),
+			P2PPort:    uint16(*port),
+			PeerID:     id.PeerID,
+			DataDir:    *dataDir,
+			MDNSActive: !*noMDNS,
+			Registry:   reg,
+			Engine:     engine,
+			Identity:   id,
+			StartTime:  time.Now(),
+		}
+		ws, err := web.NewServer(webCfg, web.DefaultAssets())
+		if err == nil {
+			webServer = ws
+			go func() {
+				if err := webServer.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					fmt.Fprintf(stderr, "Web server warning: %v\n", err)
+				}
+			}()
+		}
+	}
+
 	if *jsonFlag {
-		WriteJSON(stdout, "success", "start", map[string]interface{}{
+		jsonMap := map[string]interface{}{
 			"peer_id": id.PeerID,
 			"port":    *port,
 			"status":  "running",
 			"mdns":    !*noMDNS,
-		})
+		}
+		if webServer != nil {
+			jsonMap["web_port"] = *webPort
+		}
+		WriteJSON(stdout, "success", "start", jsonMap)
 	} else {
 		fmt.Fprintf(stdout, "Node daemon running on port %d.\n", *port)
 		fmt.Fprintf(stdout, "Peer ID: %s\n", id.PeerID)
+		if webServer != nil {
+			fmt.Fprintf(stdout, "Web UI Dashboard: http://localhost:%d\n", *webPort)
+		}
 		if !*noMDNS {
 			fmt.Fprintln(stdout, "mDNS local discovery active.")
 		}
@@ -146,6 +183,11 @@ func RunStart(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stdout, "\nShutting down daemon...")
 		}
 		cancel()
+		if webServer != nil {
+			shutCtx, shutCancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer shutCancel()
+			_ = webServer.Shutdown(shutCtx)
+		}
 		if mdnsSvc != nil {
 			mdnsSvc.Shutdown()
 		}
